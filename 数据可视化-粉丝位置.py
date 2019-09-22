@@ -10,7 +10,10 @@ def render():
     with open('comments.txt', mode='r', encoding='utf-8') as f:
         rows = f.readlines()
         for row in rows:
-            city = row.split(',')[2]
+            try:
+                city = row.split(',')[2]
+            except:
+                continue
             if city != '':
                 cities.append(city)
 
@@ -18,16 +21,16 @@ def render():
     handle(cities)
 
     # 统计每个城市出现的次数
-    # data = []  # [('南京',25),('北京',59)]
+    # data = []
     # for city in set(cities):
     #     data.append((city, cities.count(city)))
     data = Counter(cities).most_common()
 
     # 根据城市数据生成地理坐标图
     geo = Geo(
-        "《一出好戏》粉丝位置分布",
+        "电影《哪吒》用户位置分布及热度",
         "数据来源：猫眼",
-        title_color="#fff",
+        title_color="#FFF",
         title_pos="center",
         width=1200,
         height=600,
@@ -38,7 +41,7 @@ def render():
         "",
         attr,
         value,
-        visual_range=[0, 3500],
+        visual_range=[0, 6500],
         visual_text_color="#fff",
         symbol_size=15,
         is_visualmap=True,
@@ -47,7 +50,7 @@ def render():
 
     # 根据城市数据生成柱状图
     cities_top20 = Counter(cities).most_common(20)  # 返回出现次数最多的20条
-    bar = Bar("《一出好戏》粉丝来源排行榜TOP20", '数据来源：猫眼', title_pos='center', width=1200, height=600)
+    bar = Bar("《哪吒》粉丝来源排行榜", '数据来源：猫眼', title_pos='center', width=1200, height=600)
     attr, value = bar.cast(cities_top20)
     bar.add("", attr, value)
     bar.render('粉丝来源排行榜-柱状图.html')
@@ -56,7 +59,8 @@ def render():
 # 处理地名数据，解析坐标文件中找不到地名的问题
 def handle(cities):
     with open(
-            'C:/Users/User/PycharmProjects/python-spider/venv/Lib/site-packages/pyecharts/datasets/city_coordinates.json',
+            # city_coordinates.json地址
+            '/home/persephone/.local/lib/python3.6/site-packages/pyecharts/datasets/city_coordinates.json',
             mode='r', encoding='utf-8') as f:
         data = json.loads(f.read())  # 将str转换为dict
 
@@ -74,15 +78,16 @@ def handle(cities):
             if k.startswith(city[0:-1]) and len(city) >= 3:  # 处理行政变更的地名，如溧水县 改为 溧水区
                 data_new[city] = data[k]
                 break
-        # 处理不存在的情况
+        # 处理不存在的情况,循环了所有标准地址一遍，还是没有，干脆删了8
         if count == len(data):
+            # 可能有重复的，全部删掉
             while city in cities:
                 cities.remove(city)
     # print(len(data), len(data_new))
 
     # 写入覆盖坐标文件
     with open(
-            'C:/Users/User/PycharmProjects/python-spider/venv/Lib/site-packages/pyecharts/datasets/city_coordinates.json',
+            '/home/persephone/.local/lib/python3.6/site-packages/pyecharts/datasets/city_coordinates.json',
             mode='w', encoding='utf-8') as f:
         f.write(json.dumps(data_new, ensure_ascii=False))  # 将dict转换为str，指定ensure_ascii=False支持中文
 
